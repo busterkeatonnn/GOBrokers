@@ -4,7 +4,7 @@
 - PR11 - REDIS(PUBSUB)
 - PR12 - RABBITMQ-TASK (Использовать manual ack, В случае ошибки — не подтверждать сообщение)
 - PR13 - NATS - сделать несколько Consumer'ов, которые подключатся к NATS, подпишутся на тему jobs.create через queue group workers, а потом каждый обработчик будет обрабатывать только свою часть задач.
-
+- PR14 - KAFKA
 
 ## PR7
 ### REDIS
