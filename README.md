@@ -149,3 +149,23 @@ go run pubsub.go subscriber
 cd redis-cache
 go run pubsub.go subscriber
 ```
+
+
+
+## KAFKA
+
+```bash
+go get github.com/segmentio/kafka-go
+```
+
+На одном терминале
+```bash
+cd consumer
+go run *.go
+```
+
+На другом терминале
+```bash
+cd producer
+go run *.go
+```
