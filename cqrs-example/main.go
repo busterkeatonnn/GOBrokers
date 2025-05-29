@@ -1,3 +1,4 @@
+// main.go
 package main
 
 import (
@@ -5,13 +6,24 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"path/filepath"
+	"os"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	// Путь к файлу событий
+	eventLogPath := filepath.Join("data", "event_log.json")
+
+	// Создаем директорию для данных, если она не существует
+	os.MkdirAll(filepath.Dir(eventLogPath), 0755)
+
 	// Инициализируем хранилище событий
-	store := NewEventStore()
+	store, err := NewEventStore(eventLogPath)
+	if err != nil {
+		log.Fatalf("Ошибка при инициализации хранилища событий: %v", err)
+	}
 
 	// Создаем проекцию заказов
 	orderProjection := NewOrderProjection(store)
@@ -30,7 +42,7 @@ func main() {
 		// Создаем команду
 		command := CreateOrderCommand{
 			CustomerID: customerID,
-			Items:      []string{item},
+			Items:     []string{item},
 		}
 
 		// Обрабатываем команду
@@ -39,9 +51,6 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		// Обновляем проекцию
-		orderProjection.rebuildProjection()
 
 		// Возвращаем ответ
 		fmt.Fprintf(w, "Заказ создан, ID: %d", orderID)
@@ -67,9 +76,6 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		// Обновляем проекцию
-		orderProjection.rebuildProjection()
 
 		// Возвращаем ответ
 		fmt.Fprint(w, "Заказ оплачен")
@@ -104,9 +110,6 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		// Обновляем проекцию
-		orderProjection.rebuildProjection()
 
 		// Возвращаем ответ
 		fmt.Fprint(w, "Заказ отменен")
@@ -154,6 +157,21 @@ func main() {
 		for _, order := range orders {
 			fmt.Fprintf(w, "Заказ #%d - Клиент: %s, Статус: %s, Товары: %v\n",
 				order.ID, order.CustomerID, order.Status, order.Items)
+		}
+	}).Methods("GET")
+
+	// Добавляем маршрут для просмотра лога событий
+	r.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
+		// Получение всех событий
+		events := store.GetAllEvents()
+
+		// Формируем ответ в текстовом формате
+		w.Header().Set("Content-Type", "text/plain")
+		fmt.Fprintln(w, "Лог событий:")
+
+		for i, event := range events {
+			fmt.Fprintf(w, "[%d] %s - OrderID: %d, Timestamp: %s\n",
+				i+1, event.GetType(), event.GetOrderID(), event.GetTimestamp())
 		}
 	}).Methods("GET")
 

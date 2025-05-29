@@ -1,3 +1,4 @@
+// store.go
 package main
 
 import (
@@ -7,17 +8,33 @@ import (
 
 // EventStore хранилище событий
 type EventStore struct {
-	events  []Event         // Список всех событий
-	orderID int             // Счетчик ID заказов
-	mu      sync.RWMutex    // Мьютекс для безопасного доступа
+	queue    *EventQueue     // Очередь событий
+	orderID  int             // Счетчик ID заказов
+	mu       sync.RWMutex    // Мьютекс для безопасного доступа
 }
 
 // NewEventStore создает новое хранилище событий
-func NewEventStore() *EventStore {
-	return &EventStore{
-		events:  make([]Event, 0),
+func NewEventStore(logFilePath string) (*EventStore, error) {
+	// Создаем очередь событий
+	queue, err := NewEventQueue(logFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	store := &EventStore{
+		queue:   queue,
 		orderID: 0,
 	}
+
+	// Определяем максимальный orderID из загруженных событий
+	events := queue.GetAll()
+	for _, event := range events {
+		if event.GetOrderID() > store.orderID {
+			store.orderID = event.GetOrderID()
+		}
+	}
+
+	return store, nil
 }
 
 // NextOrderID генерирует следующий ID заказа
@@ -30,11 +47,11 @@ func (s *EventStore) NextOrderID() int {
 
 // SaveEvent сохраняет событие в хранилище
 func (s *EventStore) SaveEvent(event Event) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Добавляем событие в список
-	s.events = append(s.events, event)
+	// Добавляем событие в очередь
+	err := s.queue.Enqueue(event)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("Событие сохранено: %s для заказа #%d", event.GetType(), event.GetOrderID())
 	return nil
@@ -42,29 +59,10 @@ func (s *EventStore) SaveEvent(event Event) error {
 
 // GetEventsForOrder возвращает все события для указанного заказа
 func (s *EventStore) GetEventsForOrder(orderID int) []Event {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	result := make([]Event, 0)
-
-	// Находим все события для заказа
-	for _, event := range s.events {
-		if event.GetOrderID() == orderID {
-			result = append(result, event)
-		}
-	}
-
-	return result
+	return s.queue.GetByOrderID(orderID)
 }
 
 // GetAllEvents возвращает все события
 func (s *EventStore) GetAllEvents() []Event {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	// Копируем список событий
-	result := make([]Event, len(s.events))
-	copy(result, s.events)
-
-	return result
+	return s.queue.GetAll()
 }

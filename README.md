@@ -128,6 +128,10 @@ curl -X POST http://localhost:8081/orders/1/pay
 curl -X POST "http://localhost:8081/orders/1/cancel?reason=Передумал"
 ```
 
+Просмотр журнала событий:
+```bash
+curl "http://localhost:8081/events"
+```
 ---
 
 ## PR11

@@ -1,0 +1,3 @@
+{"type":"OrderCreated","order_id":1,"timestamp":"2025-05-29T22:14:05Z","data":{"OrderID":1,"Timestamp":"2025-05-29T22:14:05.948214498Z","CustomerID":"customer1","Items":["laptop"]}}
+{"type":"OrderPaid","order_id":1,"timestamp":"2025-05-29T22:14:30Z","data":{"OrderID":1,"Timestamp":"2025-05-29T22:14:30.286335887Z"}}
+{"type":"OrderCancelled","order_id":1,"timestamp":"2025-05-29T22:14:34Z","data":{"OrderID":1,"Timestamp":"2025-05-29T22:14:34.026611776Z","Reason":"Передумал"}}

@@ -1,3 +1,4 @@
+// projections.go
 package main
 
 import (
@@ -6,9 +7,9 @@ import (
 
 // OrderProjection проекция для заказов
 type OrderProjection struct {
-	store  *EventStore           // Хранилище событий
-	orders map[int]*OrderState   // Кэш состояний заказов
-	mu     sync.RWMutex          // Мьютекс для безопасного доступа
+	store    *EventStore             // Хранилище событий
+	orders   map[int]*OrderState     // Кэш состояний заказов
+	mu       sync.RWMutex            // Мьютекс для безопасного доступа
 }
 
 // NewOrderProjection создает новую проекцию заказов
@@ -20,6 +21,11 @@ func NewOrderProjection(store *EventStore) *OrderProjection {
 
 	// Обрабатываем все существующие события
 	projection.rebuildProjection()
+
+	// Подписываемся на новые события
+	store.queue.Subscribe(func(event Event) {
+		projection.UpdateProjection(event)
+	})
 
 	return projection
 }
