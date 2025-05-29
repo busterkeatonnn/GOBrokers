@@ -49,6 +49,8 @@ cd redis-cache
 go run pubsub.go subscriber
 ```
 
+---
+
 ## RABBITMQ-TASK
 
 ### Реализовать отправку задач в очередь и обработку их воркером (например, задача на отправку email).
@@ -79,6 +81,8 @@ sudo docker-compose up -d
 cd rabbitmq-task
 go run main.go publisher.go consumer.go nats_example.go nats
 ```
+
+---
 
 ## CQRS
 
