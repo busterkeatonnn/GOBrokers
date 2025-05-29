@@ -1,3 +1,4 @@
+//nats_example.go
 package main
 
 import (

@@ -1,3 +1,4 @@
+//publisher.go
 package main
 
 import (
@@ -71,6 +72,7 @@ func runPublisher() {
 				// Создаем новую задачу на отправку email
 				task := EmailTask{
 					To:      fmt.Sprintf("user%d@example.com", counter),
+					//To:      fmt.Sprintf("error_user%d@example.com", counter), // если хотим продемонстрировать сценарий с ошибкой
 					Subject: fmt.Sprintf("Важное сообщение #%d", counter),
 					Body:    fmt.Sprintf("Это тестовое сообщение #%d, отправленное %s", counter, time.Now().Format(time.RFC3339)),
 					Created: time.Now(),

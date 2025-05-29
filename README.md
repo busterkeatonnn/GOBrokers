@@ -1,8 +1,15 @@
 # GOBrokers
 
-## REDIS
+- PR7 - REDIS (CACHE + PUBSUB) + (RABBITMQ-TASK + NATS) + CQRS
+- PR11 - REDIS(PUBSUB)
+- PR12 - RABBITMQ-TASK (Использовать manual ack, В случае ошибки — не подтверждать сообщение)
+- PR13 - NATS - сделать несколько Consumer'ов, которые подключатся к NATS, подпишутся на тему jobs.create через queue group workers, а потом каждый обработчик будет обрабатывать только свою часть задач.
 
-### Кеширование
+
+## PR7
+### REDIS
+
+#### Кеширование
 
 ```bash
 sudo docker-compose up -d
@@ -10,7 +17,7 @@ cd redis-cache
 go run main.go
 ```
 
-#### Чистим кеш
+##### Чистим кеш
 
 ```bash
 redis-cli
@@ -19,7 +26,7 @@ KEYS "profile:*"
 exit
 ```
 
-#### Проверяем, что кеш работает
+##### Проверяем, что кеш работает
 
 ```bash
 curl -i http://localhost:8080/profile/123
@@ -34,38 +41,23 @@ curl -i http://localhost:8080/profile/123
 curl -s -o /dev/null -D - http://localhost:8080/profile/123 | grep -i X-Cache
 ```
 
-### PubSub
-
-На одном терминале:
-```bash
-sudo docker-compose up -d
-cd redis-cache
-go run pubsub.go subscriber
-```
-
-На другом терминале:
-```bash
-cd redis-cache
-go run pubsub.go subscriber
-```
-
 ---
 
-## RABBITMQ-TASK
+### RABBITMQ-TASK
 
-### Реализовать отправку задач в очередь и обработку их воркером (например, задача на отправку email).
+#### Реализовать отправку задач в очередь и обработку их воркером (например, задача на отправку email).
 
 На одном терминале
 ```bash
 sudo docker-compose up -d
 cd rabbitmq-task
-go run main.go publisher.go consumer.go nats_example.go consumer
+go run *.go consumer
 ```
 
 На другом терминале
 ```bash
 cd rabbitmq-task
-go run main.go publisher.go consumer.go nats_example.go publisher
+go run *.go publisher
 ```
 
 Можем также через UI посмотреть состояние очереди. (логин: guest, пароль: guest)
@@ -73,18 +65,37 @@ go run main.go publisher.go consumer.go nats_example.go publisher
 curl http://localhost:15672/
 ```
 
-### NATS
+#### NATS
 
-На одном терминале
+Для PR7 На одном терминале
 ```bash
 sudo docker-compose up -d
 cd rabbitmq-task
-go run main.go publisher.go consumer.go nats_example.go nats
+go run *.go nats
 ```
 
+Для PR13 На одном терминале
+```bash
+sudo docker-compose up -d
+cd rabbitmq-task
+go run *.go nats-publisher
+```
+
+Для PR13 На других терминалах
+```bash
+cd rabbitmq-task
+# Терминал 1
+WORKER_ID=worker1 go run *.go nats-consumer
+
+# Терминал 2
+WORKER_ID=worker2 go run *.go nats-consumer
+
+# Терминал 3
+WORKER_ID=worker3 go run *.go nats-consumer
+```
 ---
 
-## CQRS
+### CQRS
 
 ```bash
 sudo docker-compose up -d
@@ -115,4 +126,22 @@ curl -X POST http://localhost:8081/orders/1/pay
 Отмените заказ:
 ```bash
 curl -X POST "http://localhost:8081/orders/1/cancel?reason=Передумал"
+```
+
+---
+
+## PR11
+### REDIS (PubSub)
+
+На одном терминале:
+```bash
+sudo docker-compose up -d
+cd redis-cache
+go run pubsub.go subscriber
+```
+
+На другом терминале:
+```bash
+cd redis-cache
+go run pubsub.go subscriber
 ```
