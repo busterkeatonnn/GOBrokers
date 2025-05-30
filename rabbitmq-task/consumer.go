@@ -12,24 +12,25 @@ import (
     "github.com/streadway/amqp"
 )
 
-// simulateEmailSending имитирует отправку email и может возвращать ошибку
-// для тестирования механизма подтверждений
-func simulateEmailSending(task EmailTask) error {
+// contains проверяет, содержит ли строка подстроку
+func contains(s, substr string) bool {
+    return len(s) >= len(substr) && s[0:len(substr)] == substr
+}
+
+// EmailSending отправляет email и может возвращать ошибку
+// для тестирования подтверждений
+func EmailSending(task EmailTask) error {
     // Для демонстрационных целей - считаем, что адреса с "error" в них вызывают ошибку
     if contains(task.To, "error") {
         return errors.New("ошибка при отправке email")
     }
 
-    // Имитация работы
+    // Типо отправляем
     log.Printf("Отправка email to: %s, subject: %s", task.To, task.Subject)
     time.Sleep(2 * time.Second)
     return nil
 }
 
-// contains проверяет, содержит ли строка подстроку
-func contains(s, substr string) bool {
-    return len(s) >= len(substr) && s[0:len(substr)] == substr
-}
 
 // runConsumer запускает обработчик задач из очереди RabbitMQ
 func runConsumer() {
@@ -105,7 +106,7 @@ func runConsumer() {
             log.Printf("Получена задача на отправку email: %s", task.Subject)
 
             // Имитация отправки email с возможной ошибкой
-            err = simulateEmailSending(task)
+            err = EmailSending(task)
             if err != nil {
                 log.Printf("Ошибка отправки email: %v", err)
                 // В случае ошибки не подтверждаем сообщение,
